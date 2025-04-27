@@ -33,7 +33,7 @@ WORDLISTS = [
     {
         "title": "Ultra fast (rockyou-65 with rules)",
         "path": "rockyou-65.txt.gz",
-        "rule": "best64.rule",
+        "rule": "best66.rule",
     },
     {"title": "Fast (hk_hlm_founds)", "path": "hk_hlm_founds.txt.gz", "rule": False},
     {"title": "Medium (hashkiller24)", "path": "hashkiller24.txt.gz", "rule": False},
@@ -41,12 +41,12 @@ WORDLISTS = [
     {
         "title": "Slower (hk_hlm_founds with rules)",
         "path": "hk_hlm_founds.txt.gz",
-        "rule": "best64.rule",
+        "rule": "best66.rule",
     },
     {
         "title": "Slowest (hashkiller24 with rules)",
         "path": "hashkiller24.txt.gz",
-        "rule": "best64.rule",
+        "rule": "best66.rule",
     },
 ]
 
