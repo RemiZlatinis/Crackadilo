@@ -1,0 +1,5 @@
+hs
+kernels
+benchmark_result.txt
+*.pyc
+combined.22000
