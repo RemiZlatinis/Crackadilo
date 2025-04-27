@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "crackadilo"
+version = "0.1.0"
+description = "Simplified wrapper foSimplified wrapper for cracking WPA/WPA2 PMKID hashes using hashcat"
+authors = ["Remi Zlatinis"]
+license = "GPLv2"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+click = "^8.1.8"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

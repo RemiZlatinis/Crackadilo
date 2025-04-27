@@ -18,8 +18,11 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+import click
+
 WORDLISTS_DIR = Path("/mnt/d/Downloads/wordlists/")
 RULES_DIR = Path("/usr/share/hashcat/rules/")
+ALT_RULES_DIR = Path("/usr/share/doc/hashcat/rules/")  # Arch Linux
 
 WORDLISTS = [
     {
@@ -152,16 +155,26 @@ def run_hashcat_benchmark() -> None:
             process.wait()
 
 
-if __name__ == "__main__":
-    # The directory containing the .cap and the .22000 files
-    cap_files_path = Path("./hs/")
+@click.command()
+@click.argument(
+    "capture_files_dir",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True),
+)
+@click.argument(
+    "wordlists_dir",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True),
+)
+def main(capture_files_dir, wordlists_dir, rules_dir=RULES_DIR):
+    capture_files_dir = Path(capture_files_dir)
+    wordlists_dir = Path(wordlists_dir)
+    rules_dir = Path(rules_dir)
 
     # --- Validation ---
     # Check if the hashcat is installed on the system
     command = "hashcat --version"
     try:
         subprocess.check_output(command, shell=True)
-        print("✅ Hashcat is installed.")
+        print("\n✅ Hashcat is installed.")
     except subprocess.CalledProcessError:
         print("❌ Hashcat is not installed. Please install it first.")
         exit(1)
@@ -176,10 +189,10 @@ if __name__ == "__main__":
         exit(1)
 
     # Check if the cap files directory exists
-    if cap_files_path.exists():
+    if capture_files_dir.exists():
         # Check if there is at least one .cap or .22000 file in the directory
-        cap_files = list(cap_files_path.glob("*.cap")) + list(
-            cap_files_path.glob("*.22000")
+        cap_files = list(capture_files_dir.glob("*.cap")) + list(
+            capture_files_dir.glob("*.22000")
         )
         if cap_files:
             print("✅ Capture files found.")
@@ -191,10 +204,10 @@ if __name__ == "__main__":
         exit(1)
 
     # Check if the wordlists directory exists
-    if WORDLISTS_DIR.exists():
+    if wordlists_dir.exists():
         # Check if the listed wordlists exist in the directory
         for wordlist in WORDLISTS:
-            wordlist_path = WORDLISTS_DIR / wordlist["path"]
+            wordlist_path = wordlists_dir / wordlist["path"]
             if not wordlist_path.exists():
                 print(f"❌ {wordlist['title']} not found. Please check the path.")
                 exit(1)
@@ -205,19 +218,17 @@ if __name__ == "__main__":
         exit(1)
 
     # Check if the rules directory exists
-    if RULES_DIR.exists():
+    rules_dir = rules_dir if rules_dir.exists() else ALT_RULES_DIR
+    if rules_dir.exists():
         # Check if the listed rules exist in the directory
         for wordlist in WORDLISTS:
             if wordlist["rule"]:
-                rule_path = RULES_DIR / wordlist["rule"]
+                rule_path = rules_dir / wordlist["rule"]
                 if not rule_path.exists():
                     print(f"❌ {wordlist['rule']} not found. Please check the path.")
                     exit(1)
         else:
             print("✅ All rules found.")
-    else:
-        print("❌ Rules directory not found. Please check the path.")
-        exit(1)
 
     print()
     # --- Validation END ---
@@ -231,7 +242,7 @@ if __name__ == "__main__":
 
     # --- Combining capture files ---
     # Convert .cap files to .22000 files
-    for cap_file in cap_files_path.glob("*.cap"):
+    for cap_file in capture_files_dir.glob("*.cap"):
         # Check if the .cap file is already converted to .22000 else convert it
         if not (cap_file.with_suffix(".22000")).exists():
             print(f"🔄 Converting {cap_file} to .22000...")
@@ -248,7 +259,7 @@ if __name__ == "__main__":
             print(f"⏭️  {cap_file.with_suffix('.22000')} already exists.")
 
     # Combine all .22000 files into one file
-    pmkid_files = list(cap_files_path.glob("*.22000"))
+    pmkid_files = list(capture_files_dir.glob("*.22000"))
     hashes = []
     combined_file = Path("combined.22000")
     for file in pmkid_files:
@@ -290,11 +301,11 @@ if __name__ == "__main__":
             "--session",
             session,
             combined_file.absolute().__str__(),
-            f"{WORDLISTS_DIR / wordlist['path']}",
-            "" if wordlist["rule"] is False else f"-r {RULES_DIR / wordlist['rule']}",
+            f"{wordlists_dir / wordlist['path']}",
+            "" if wordlist["rule"] is False else f"-r {rules_dir / wordlist['rule']}",
         ]
         command = " ".join(command).replace("'", "").replace('"', "")
-        # print(f"Command: {command}")
+
         process = subprocess.Popen(
             command,
             shell=True,
@@ -302,13 +313,16 @@ if __name__ == "__main__":
             stderr=subprocess.PIPE,
             text=True,
             encoding="utf-8",
-            bufsize=1,
         )
         for line in process.stdout:
             print(line, end="")
 
         process.wait()
         print(f"\n🔚 Cracking session {session} completed.\n")
-    # --- Cracking ---
+    # --- Cracking Commands END ---
 
     exit(0)
+
+
+if __name__ == "__main__":
+    main()
